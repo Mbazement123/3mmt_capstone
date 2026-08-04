@@ -23,6 +23,8 @@ if [[ "$SOURCE_FILE" == *.enc ]]; then
     exit 1
   fi
   openssl enc -d -aes-256-cbc -pbkdf2 -in "$SOURCE_FILE" -out "$ARCHIVE_FILE" -k "$DR_ENC_KEY"
+elif [[ "$SOURCE_FILE" == "$ARCHIVE_FILE" ]]; then
+  echo "Restore archive already present; skipping copy."
 else
   cp "$SOURCE_FILE" "$ARCHIVE_FILE"
 fi
