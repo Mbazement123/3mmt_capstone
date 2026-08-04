@@ -1,0 +1,39 @@
+name: DR Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  validate-dr-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubernetes (Kind)
+        uses: helm/kind-action@v1.8.0
+        with:
+          cluster_name: dr-secondary-cluster
+
+      - name: Start monitoring stack
+        run: docker compose up -d pushgateway
+
+      - name: Run backup automation
+        env:
+          DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
+        run: |
+          chmod +x ./scripts/*.sh
+          ./scripts/backup.sh
+
+      - name: Run restore automation
+        env:
+          DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
+        run: ./scripts/restore.sh dr-site
+
+      - name: Check workload health
+        run: |
+          kubectl port-forward svc/mario-api-service 8080:80 -n dr-site &
+          sleep 5
+          ./scripts/health-check.sh http://localhost:8080

@@ -1,0 +1,8 @@
+groups:
+  - name: dr-alerts
+    rules:
+      - alert: DRRecoveryFailed
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical

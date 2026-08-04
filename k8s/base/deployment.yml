@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mario-api
+  labels:
+    app: mario-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mario-api
+  template:
+    metadata:
+      labels:
+        app: mario-api
+    spec:
+      containers:
+        - name: mario-api
+          image: mbazement123/mario-api:latest
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /api
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5

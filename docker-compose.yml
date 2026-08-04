@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  mario-api:
+    image: mbazement123/mario-api:latest
+    build:
+      context: ./mario-api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    ports:
+      - "9091:9091"
