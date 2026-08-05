@@ -47,13 +47,20 @@ if command -v kubectl >/dev/null 2>&1; then
   MANIFEST_CONTENT=""
   if [[ -d "$RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE" ]]; then
     echo "Using overlay: $RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE"
-    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE" 2>/dev/null || true)
+    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE" 2>/tmp/dr-restore-kustomize.err || true)
+    if [[ -z "$MANIFEST_CONTENT" ]]; then
+      echo "Overlay render failed, falling back to raw YAML. Reason:"
+      sed -n '1,20p' /tmp/dr-restore-kustomize.err
+    fi
   fi
 
   if [[ -z "$MANIFEST_CONTENT" ]] && [[ -d "$RESTORE_DIR/k8s/base" ]]; then
     echo "Using base manifests: $RESTORE_DIR/k8s/base"
-    # kustomize requires a kustomization file, so fall back to raw YAML apply
-    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/base" 2>/dev/null || true)
+    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/base" 2>/tmp/dr-restore-kustomize.err || true)
+    if [[ -z "$MANIFEST_CONTENT" ]]; then
+      echo "Base render failed, falling back to raw YAML. Reason:"
+      sed -n '1,20p' /tmp/dr-restore-kustomize.err
+    fi
   fi
 
   if [[ -n "$MANIFEST_CONTENT" ]]; then
@@ -62,7 +69,7 @@ if command -v kubectl >/dev/null 2>&1; then
     echo "$MANIFEST_CONTENT" | sed '/^\s*namespace:\s*/d' | kubectl apply -n "$TARGET_NAMESPACE" -f -
   else
     echo "Applying raw manifests into namespace: $TARGET_NAMESPACE"
-    find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) ! -iname 'kustomization.yml' ! -iname 'kustomization.yaml' | while read -r f; do
+    find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) ! -iname 'kustomization.yml' ! -iname 'kustomization.yaml' ! -iname 'Kustomization' | while read -r f; do
       echo "Applying $f -> namespace=$TARGET_NAMESPACE"
       sed '/^\s*namespace:\s*/d' "$f" | kubectl apply -n "$TARGET_NAMESPACE" -f - || true
     done
