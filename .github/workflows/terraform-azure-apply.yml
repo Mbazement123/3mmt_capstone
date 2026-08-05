@@ -24,11 +24,8 @@ jobs:
       contents: read
       id-token: write
     env:
-      
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }} # 3d67a7d5-9315-4d5f-b111-5020efc461b7
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }} # d05a899e-0b13-4d1f-ba87-ac19e2bad1ef
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }} #0adde2d7-a128-464a-b72f-008ec63881f3
       PERSONAL_GITHUB_PAT: ${{ secrets.PERSONAL_GITHUB_PAT }}
+      ARM_USE_OIDC: true
 
     steps:
       - name: Checkout
@@ -39,20 +36,10 @@ jobs:
         with:
           terraform_version: '1.5.0'
 
-      - name: Azure Login (using AZURE_CREDENTIALS JSON)
-        if: ${{ env.AZURE_CREDENTIALS != '' }}
+      - name: Azure Login (using OIDC)
         uses: azure/login@v1
         with:
-          creds: ${{ env.AZURE_CREDENTIALS }}
-
-      - name: Azure Login (using ARM_* secrets)
-        if: ${{ env.AZURE_CREDENTIALS == '' }}
-        uses: azure/login@v1
-        with:
-          client-id: ${{ env.ARM_CLIENT_ID }}
-          client-secret: ${{ env.ARM_CLIENT_SECRET }}
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
 
       - name: Terraform Init
         working-directory: infra/azure
