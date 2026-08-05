@@ -8,6 +8,8 @@ on:
 jobs:
   dr-drill:
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,6 +18,11 @@ jobs:
         uses: helm/kind-action@v1.8.0
         with:
           cluster_name: dr-drill-cluster
+
+      - name: Install LitmusChaos CRDs
+        run: |
+          kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v1.13.0.yaml
+          kubectl wait --for=condition=Available deployment/litmus-operator -n litmus --timeout=120s || true
 
       - name: Execute DR drill
         env:
