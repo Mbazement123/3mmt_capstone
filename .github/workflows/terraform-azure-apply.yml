@@ -24,12 +24,12 @@ jobs:
       contents: read
       id-token: write
     env:
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }} # 3d67a7d5-9315-4d5f-b111-5020efc461b7
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }} # d05a899e-0b13-4d1f-ba87-ac19e2bad1ef
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }} #0adde2d7-a128-464a-b72f-008ec63881f3
       PERSONAL_GITHUB_PAT: ${{ secrets.PERSONAL_GITHUB_PAT }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
