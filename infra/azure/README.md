@@ -22,9 +22,17 @@ GitHub Actions
 - Preferred repository secret: `AZURE_CREDENTIALS` — a JSON service principal (same format produced by `az ad sp create-for-rbac --sdk-auth`).
 - Alternative: set these individual secrets instead of `AZURE_CREDENTIALS`:
   - `ARM_CLIENT_ID`
-  - `ARM_CLIENT_SECRET`
   - `ARM_TENANT_ID`
   - `ARM_SUBSCRIPTION_ID`
+  - `ARM_CLIENT_SECRET` (not required when using OIDC)
+
+OIDC (recommended for GitHub Actions)
+- Instead of a client secret, prefer workload identity federation via GitHub Actions OIDC.
+- In that case set the following in your GitHub Actions workflow environment (the workflow in this repo already does this):
+  - `ARM_USE_OIDC=true`
+  - `ARM_CLIENT_ID`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID` (the app registration must have a federated credential matching the repository/ref)
+
+See: https://learn.microsoft.com/entra/workload-id/workload-identity-federation for how to create a federated credential on your Azure app registration.
 - Optional repository secret: `PERSONAL_GITHUB_PAT` — a personal access token with `repo` scope. If provided and the workflow dispatch input `create_github_secret` is set to `true`, the workflow will create/update the repository secret `DATABASE_URL` with the provisioned DB connection string.
 
 Use the workflow via the Actions UI or trigger with `workflow_dispatch` inputs:
