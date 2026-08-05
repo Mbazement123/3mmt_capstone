@@ -34,7 +34,7 @@ tar -xzf "$ARCHIVE_FILE" -C "$RESTORE_DIR"
 if command -v kubectl >/dev/null 2>&1; then
   if ! kubectl get crd chaosengines.litmuschaos.io >/dev/null 2>&1; then
     echo "Installing LitmusChaos CRDs and operator"
-    kubectl create namespace litmus --dry-run=client -o yaml | kubectl apply -f -
+    kubectl get namespace litmus >/dev/null 2>&1 || kubectl create namespace litmus
     kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-portal-crds.yml
     kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-installation.yaml
     kubectl wait --for=condition=Available deployment/chaos-operator-ce -n litmus --timeout=120s || true
