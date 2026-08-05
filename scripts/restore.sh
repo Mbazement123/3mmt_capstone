@@ -32,6 +32,12 @@ fi
 tar -xzf "$ARCHIVE_FILE" -C "$RESTORE_DIR"
 
 if command -v kubectl >/dev/null 2>&1; then
+  if ! kubectl get crd chaosengines.litmuschaos.io >/dev/null 2>&1; then
+    echo "Installing LitmusChaos CRDs"
+    kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v1.13.0.yaml
+    kubectl wait --for=condition=Available deployment/litmus-operator -n litmus --timeout=120s || true
+  fi
+
   kubectl create namespace "$TARGET_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
   kubectl apply -k "$RESTORE_DIR/k8s/overlays/${TARGET_NAMESPACE}" -n "$TARGET_NAMESPACE" 2>/dev/null || kubectl apply -f "$RESTORE_DIR/k8s/base" -n "$TARGET_NAMESPACE"
   kubectl rollout status deployment/mario-api -n "$TARGET_NAMESPACE" --timeout=90s 2>/dev/null || true
