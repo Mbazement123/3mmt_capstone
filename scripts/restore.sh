@@ -40,8 +40,34 @@ if command -v kubectl >/dev/null 2>&1; then
     kubectl wait --for=condition=Available deployment/chaos-operator-ce -n litmus --timeout=120s || true
   fi
 
+  # Ensure the target namespace exists
   kubectl create namespace "$TARGET_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl apply -k "$RESTORE_DIR/k8s/overlays/${TARGET_NAMESPACE}" -n "$TARGET_NAMESPACE" 2>/dev/null || kubectl apply -f "$RESTORE_DIR/k8s/base" -n "$TARGET_NAMESPACE"
+
+  # Prefer kustomize overlays if present; render manifests and strip metadata.namespace
+  MANIFEST_CONTENT=""
+  if [[ -d "$RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE" ]]; then
+    echo "Using overlay: $RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE"
+    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/overlays/$TARGET_NAMESPACE" 2>/dev/null || true)
+  fi
+
+  if [[ -z "$MANIFEST_CONTENT" ]] && [[ -d "$RESTORE_DIR/k8s/base" ]]; then
+    echo "Using base manifests: $RESTORE_DIR/k8s/base"
+    MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/base" 2>/dev/null || true)
+  fi
+
+  if [[ -n "$MANIFEST_CONTENT" ]]; then
+    echo "Applying rendered manifests into namespace: $TARGET_NAMESPACE"
+    # remove any explicit metadata.namespace entries to avoid namespace mismatch
+    echo "$MANIFEST_CONTENT" | sed '/^\s*namespace:\s*/d' | kubectl apply -n "$TARGET_NAMESPACE" -f -
+  else
+    echo "No kustomize manifests found; applying individual YAML files under $RESTORE_DIR/k8s"
+    # Fallback: apply each yaml file after removing metadata.namespace lines
+    find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) | while read -r f; do
+      echo "Applying $f -> namespace=$TARGET_NAMESPACE"
+      sed '/^\s*namespace:\s*/d' "$f" | kubectl apply -n "$TARGET_NAMESPACE" -f - || true
+    done
+  fi
+
   kubectl rollout status deployment/mario-api -n "$TARGET_NAMESPACE" --timeout=90s 2>/dev/null || true
 else
   echo "kubectl not available; skipping cluster restore"
