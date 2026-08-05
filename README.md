@@ -98,8 +98,8 @@ spec:
   type: ClusterIP
   ports:
     - name: http
-      port: 80
-      targetPort: 8080
+      port: 8080
+      targetPort: 5000
       protocol: TCP
   selector:
     app: mario-api
@@ -262,7 +262,7 @@ jobs:
 
       - name: Execute Health Checks
         run: |
-          kubectl port-forward svc/mario-api-service 8080:80 -n dr-site &
+          kubectl port-forward svc/mario-api-service 8080:8080 -n dr-site &
           sleep 5
           ./scripts/health-check.sh http://localhost:8080
 

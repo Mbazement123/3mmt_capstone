@@ -24,7 +24,7 @@ jobs:
           kubectl get namespace litmus >/dev/null 2>&1 || kubectl create namespace litmus
           kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-portal-crds.yml
           kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-installation.yaml
-          kubectl wait --for=condition=Available deployment/chaos-operator-ce -n litmus --timeout=120s || true
+          kubectl wait --for=condition=Available deployment --all -n litmus --timeout=120s || true
 
       - name: Execute DR drill
         env:
@@ -33,7 +33,7 @@ jobs:
           chmod +x ./scripts/*.sh
           ./scripts/backup.sh
           ./scripts/restore.sh dr-site
-          kubectl port-forward svc/mario-api-service 8080:80 -n dr-site &
+          kubectl port-forward svc/mario-api-service 8080:8080 -n dr-site &
           PF_PID=$!
           sleep 5
           ./scripts/health-check.sh http://localhost:8080
