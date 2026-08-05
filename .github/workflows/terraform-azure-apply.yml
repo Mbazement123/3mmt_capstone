@@ -23,6 +23,13 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      PERSONAL_GITHUB_PAT: ${{ secrets.PERSONAL_GITHUB_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,19 +40,19 @@ jobs:
           terraform_version: '1.5.0'
 
       - name: Azure Login (using AZURE_CREDENTIALS JSON)
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        if: ${{ env.AZURE_CREDENTIALS != '' }}
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: ${{ env.AZURE_CREDENTIALS }}
 
       - name: Azure Login (using ARM_* secrets)
-        if: ${{ secrets.AZURE_CREDENTIALS == '' }}
+        if: ${{ env.AZURE_CREDENTIALS == '' }}
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.ARM_CLIENT_ID }}
-          client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
-          tenant-id: ${{ secrets.ARM_TENANT_ID }}
-          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ env.ARM_CLIENT_ID }}
+          client-secret: ${{ env.ARM_CLIENT_SECRET }}
+          tenant-id: ${{ env.ARM_TENANT_ID }}
+          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
 
       - name: Terraform Init
         working-directory: infra/azure
@@ -80,10 +87,10 @@ jobs:
         run: echo "${{ steps.tf_output.outputs.dburl }}" > database_url.txt
 
       - name: Optionally create repository secret DATABASE_URL
-        if: ${{ secrets.PERSONAL_GITHUB_PAT != '' && github.event.inputs.create_github_secret == 'true' }}
+        if: ${{ env.PERSONAL_GITHUB_PAT != '' && github.event.inputs.create_github_secret == 'true' }}
         uses: peter-evans/create-or-update-secret@v3
         with:
-          token: ${{ secrets.PERSONAL_GITHUB_PAT }}
+          token: ${{ env.PERSONAL_GITHUB_PAT }}
           secret-name: DATABASE_URL
           secret-value: ${{ steps.tf_output.outputs.dburl }}
 
