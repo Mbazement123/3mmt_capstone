@@ -67,7 +67,6 @@ if command -v kubectl >/dev/null 2>&1; then
       sed '/^\s*namespace:\s*/d' "$f" | kubectl apply -n "$TARGET_NAMESPACE" -f - || true
     done
   fi
-
   kubectl rollout status deployment/mario-api -n "$TARGET_NAMESPACE" --timeout=90s 2>/dev/null || true
 else
   echo "kubectl not available; skipping cluster restore"
