@@ -19,10 +19,11 @@ jobs:
         with:
           cluster_name: dr-secondary-cluster
 
-      - name: Install LitmusChaos CRDs
+      - name: Install LitmusChaos CRDs and operator
         run: |
-          kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v1.13.0.yaml
-          kubectl wait --for=condition=Available deployment/litmus-operator -n litmus --timeout=120s || true
+          kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-portal-crds.yml
+          kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-installation.yaml
+          kubectl wait --for=condition=Available deployment/chaos-operator-ce -n litmus --timeout=120s || true
 
       - name: Start monitoring stack
         run: docker compose up -d pushgateway
