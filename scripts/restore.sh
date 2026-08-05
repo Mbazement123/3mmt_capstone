@@ -52,6 +52,7 @@ if command -v kubectl >/dev/null 2>&1; then
 
   if [[ -z "$MANIFEST_CONTENT" ]] && [[ -d "$RESTORE_DIR/k8s/base" ]]; then
     echo "Using base manifests: $RESTORE_DIR/k8s/base"
+    # kustomize requires a kustomization file, so fall back to raw YAML apply
     MANIFEST_CONTENT=$(kubectl kustomize "$RESTORE_DIR/k8s/base" 2>/dev/null || true)
   fi
 
@@ -60,8 +61,7 @@ if command -v kubectl >/dev/null 2>&1; then
     # remove any explicit metadata.namespace entries to avoid namespace mismatch
     echo "$MANIFEST_CONTENT" | sed '/^\s*namespace:\s*/d' | kubectl apply -n "$TARGET_NAMESPACE" -f -
   else
-    echo "No kustomize manifests found; applying individual YAML files under $RESTORE_DIR/k8s"
-    # Fallback: apply each yaml file after removing metadata.namespace lines
+    echo "Applying raw manifests into namespace: $TARGET_NAMESPACE"
     find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) | while read -r f; do
       echo "Applying $f -> namespace=$TARGET_NAMESPACE"
       sed '/^\s*namespace:\s*/d' "$f" | kubectl apply -n "$TARGET_NAMESPACE" -f - || true

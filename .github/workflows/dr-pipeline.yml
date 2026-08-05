@@ -31,12 +31,12 @@ jobs:
 
       - name: "Run backup automation"
         env:
-          DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
+          DR_ENC_KEY: ${{secrets.DR_ENC_KEY }}
         run: |
           chmod +x ./scripts/*.sh
           ./scripts/backup.sh
           
-      - name: "Run restore automation"
+      - name: Run restore automation
         env:
           DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
         run: ./scripts/restore.sh dr-site
@@ -46,3 +46,4 @@ jobs:
           kubectl port-forward svc/mario-api-service 8080:80 -n dr-site &
           sleep 5
           ./scripts/health-check.sh http://localhost:8080
+          
