@@ -49,12 +49,21 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra/azure
+        env:
+          ARM_USE_OIDC: ${{ env.ARM_USE_OIDC }}
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform init -input=false
 
       - name: Terraform Apply
         working-directory: infra/azure
         env:
           TF_IN_AUTOMATION: true
+          ARM_USE_OIDC: ${{ env.ARM_USE_OIDC }}
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: |
           terraform apply -auto-approve -input=false \
             -var="allowed_ip=${{ github.event.inputs.allowed_ip }}" \
