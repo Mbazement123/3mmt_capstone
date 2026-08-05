@@ -29,14 +29,14 @@ jobs:
       - name: Start monitoring stack
         run: docker compose up -d pushgateway
 
-      - name: Run backup automation
+      - name: "Run backup automation"
         env:
           DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
         run: |
           chmod +x ./scripts/*.sh
           ./scripts/backup.sh
-
-      - name: Run restore automation
+          
+      - name: "Run restore automation"
         env:
           DR_ENC_KEY: ${{ secrets.DR_ENC_KEY }}
         run: ./scripts/restore.sh dr-site
