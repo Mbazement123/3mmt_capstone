@@ -62,7 +62,7 @@ if command -v kubectl >/dev/null 2>&1; then
     echo "$MANIFEST_CONTENT" | sed '/^\s*namespace:\s*/d' | kubectl apply -n "$TARGET_NAMESPACE" -f -
   else
     echo "Applying raw manifests into namespace: $TARGET_NAMESPACE"
-    find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) | while read -r f; do
+    find "$RESTORE_DIR/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) ! -iname 'kustomization.yml' ! -iname 'kustomization.yaml' | while read -r f; do
       echo "Applying $f -> namespace=$TARGET_NAMESPACE"
       sed '/^\s*namespace:\s*/d' "$f" | kubectl apply -n "$TARGET_NAMESPACE" -f - || true
     done
