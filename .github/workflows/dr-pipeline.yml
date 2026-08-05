@@ -21,6 +21,7 @@ jobs:
 
       - name: Install LitmusChaos CRDs and operator
         run: |
+          kubectl create namespace litmus --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-portal-crds.yml
           kubectl apply -f https://github.com/litmuschaos/litmus/releases/download/3.31.0/litmus-installation.yaml
           kubectl wait --for=condition=Available deployment/chaos-operator-ce -n litmus --timeout=120s || true

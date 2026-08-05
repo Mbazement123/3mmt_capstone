@@ -2,10 +2,10 @@ apiVersion: litmuschaos.io/v1alpha1
 kind: ChaosEngine
 metadata:
   name: mario-api-chaos
-  namespace: default
+  namespace: dr-site
 spec:
   appinfo:
-    appns: 'default'
+    appns: 'dr-site'
     applabel: 'app=mario-api'
     appkind: 'deployment'
   chaosServiceAccount: litmus-admin
