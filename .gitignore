@@ -3,3 +3,14 @@ __pycache__/
 *.tar.gz
 *.tar.gz.enc
 /tmp/
+
+# Local environment files
+.env
+
+# Terraform local state and providers
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Azure artifacts
+infra/azure/database_url.txt

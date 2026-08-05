@@ -17,6 +17,14 @@ spec:
       containers:
         - name: mario-api
           image: mbazement123/mario-api:latest
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mario-db
+                  key: database_url
+            - name: DB_SSL
+              value: "true"
           ports:
             - containerPort: 5000
           readinessProbe:

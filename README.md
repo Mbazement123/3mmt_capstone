@@ -34,6 +34,23 @@ This repository implements a lightweight disaster recovery (DR) starter project 
    - `make health-check`
 5. Trigger the GitHub Actions workflows for scheduled DR validation
 
+## Azure Postgres provisioning
+
+If you want to host the Mario API with Azure Postgres, use the workflow at `.github/workflows/terraform-azure-apply.yml`.
+
+1. Add these repository secrets:
+   - `AZURE_CREDENTIALS` or the individual `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`
+   - `PERSONAL_GITHUB_PAT` if you want the workflow to create `DATABASE_URL` automatically.
+2. Run the workflow from the Actions UI or dispatch it manually with:
+   - `allowed_ip`: your IP or CIDR (example `203.0.113.5/32`)
+   - `location`: `centralus`
+   - `create_github_secret`: `true`
+
+After the workflow runs:
+- the Azure DB connection string is output as `database_url`
+- if requested, `DATABASE_URL` is created as a repository secret
+- your DR workflows can use `secrets.DATABASE_URL` to create the `mario-db` Kubernetes secret
+
 ## Operational goals
 
 - Keep the workload recoverable with a documented RPO and RTO

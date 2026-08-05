@@ -22,16 +22,17 @@ const devConfig = {
 }
 
 const prodConfig = {
-  provide: "SEQUELIZE",
+  provide: SEQUELIZE,
   useFactory: async () => {
+    const sslEnabled = process.env.DB_SSL === "true"
+    const dialectOptions: any = sslEnabled
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : {}
+
     const sequelize = new Sequelize(process.env.DATABASE_URL, {
       dialect: "postgres",
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      },
+      dialectOptions,
+      logging: false,
     })
     sequelize.addModels(models)
     await sequelize.sync()

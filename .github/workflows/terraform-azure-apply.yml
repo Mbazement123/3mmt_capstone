@@ -1,0 +1,93 @@
+name: "Terraform: Azure Postgres Provision"
+
+on:
+  workflow_dispatch:
+    inputs:
+      allowed_ip:
+        description: 'IP or CIDR to allow to access the DB (default 0.0.0.0)'
+        required: false
+        default: '0.0.0.0'
+      location:
+        description: 'Azure region to create resources in'
+        required: false
+        default: 'centralus'
+      create_github_secret:
+        description: 'If true and PERSONAL_GITHUB_PAT is provided, create repository secret DATABASE_URL'
+        required: false
+        default: 'false'
+
+jobs:
+  terraform-apply:
+    name: Apply Terraform (Azure)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Azure Login (using AZURE_CREDENTIALS JSON)
+        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Azure Login (using ARM_* secrets)
+        if: ${{ secrets.AZURE_CREDENTIALS == '' }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        working-directory: infra/azure
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: infra/azure
+        env:
+          TF_IN_AUTOMATION: true
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var="allowed_ip=${{ github.event.inputs.allowed_ip }}" \
+            -var="location=${{ github.event.inputs.location }}"
+
+      - name: Capture DB URL
+        id: tf_output
+        working-directory: infra/azure
+        run: |
+          dburl=$(terraform output -raw database_url)
+          echo "dburl=$dburl" >> $GITHUB_OUTPUT
+
+      - name: Save database_url artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: database_url
+          path: infra/azure/database_url.txt
+        continue-on-error: true
+
+      - name: Write database_url file
+        if: always()
+        working-directory: infra/azure
+        run: echo "${{ steps.tf_output.outputs.dburl }}" > database_url.txt
+
+      - name: Optionally create repository secret DATABASE_URL
+        if: ${{ secrets.PERSONAL_GITHUB_PAT != '' && github.event.inputs.create_github_secret == 'true' }}
+        uses: peter-evans/create-or-update-secret@v3
+        with:
+          token: ${{ secrets.PERSONAL_GITHUB_PAT }}
+          secret-name: DATABASE_URL
+          secret-value: ${{ steps.tf_output.outputs.dburl }}
+
+      - name: Output summary
+        run: |
+          echo "Database URL written to infra/azure/database_url.txt"
+          echo "(secret creation attempted if requested)"
